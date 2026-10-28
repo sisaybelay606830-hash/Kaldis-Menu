@@ -1,0 +1,60 @@
+<?php
+/**
+ * CLI Product Import Script
+ *
+ * Runs the product synchronization from the source article_import table
+ * to the local database.
+ *
+ * Usage:
+ *   php scripts/import_products.php [--dry-run] [--force]
+ */
+
+declare(strict_types=1);
+
+define('BASE_PATH', dirname(__DIR__));
+
+require_once BASE_PATH . '/vendor/autoload.php';
+
+use App\Helpers\Env;
+use App\Helpers\Logger;
+use App\Services\ImportService;
+
+Env::load(BASE_PATH . '/.env');
+Logger::init(BASE_PATH . '/storage/logs/');
+
+$dryRun = in_array('--dry-run', $argv ?? [], true);
+$force  = in_array('--force', $argv ?? [], true);
+
+echo "======================================================\n";
+echo " Kaldis Coffee PLC — Product Import & Synchronization \n";
+echo "======================================================\n";
+echo "Mode: " . ($dryRun ? "DRY-RUN (no local writes)" : "LIVE SYNC") . "\n";
+echo "Time: " . date('Y-m-d H:i:s') . "\n\n";
+
+try {
+    $service = new ImportService();
+    $result = $service->run($dryRun, null, 'cli');
+
+    echo "Status:             " . strtoupper($result['status']) . "\n";
+    echo "Records Inspected:  " . $result['records_inspected'] . "\n";
+    echo "Records Inserted:   " . $result['records_inserted'] . "\n";
+    echo "Records Updated:    " . $result['records_updated'] . "\n";
+    echo "Records Skipped:    " . $result['records_skipped'] . "\n";
+    echo "Records Errored:    " . $result['records_errored'] . "\n";
+
+    if (!empty($result['error_summary'])) {
+        echo "Error Summary:      " . $result['error_summary'] . "\n";
+    }
+
+    echo "\nCompleted at: " . $result['completed_at'] . "\n";
+
+    if ($result['status'] === 'completed') {
+        exit(0);
+    } else {
+        exit(1);
+    }
+} catch (Throwable $e) {
+    echo "\n[FATAL ERROR] " . $e->getMessage() . "\n";
+    exit(1);
+}
+

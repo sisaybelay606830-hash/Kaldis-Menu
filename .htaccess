@@ -1,0 +1,31 @@
+# ============================================================
+# Kaldis Coffee PLC — Root Application .htaccess
+# Directs requests to /public/ and denies direct file access
+# Compatible with Apache 2.4 and Apache 2.2
+# ============================================================
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Deny access to sensitive files
+    RewriteRule ^(\.env|\.git|composer\.(json|lock)|package\.json|README\.md|database|storage/logs) - [F,L,NC]
+
+    # If already in public, don't rewrite
+    RewriteRule ^public/ - [L]
+
+    # Rewrite all other traffic to public/
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
+
+# Block direct access to sensitive extensions
+<FilesMatch "(\.env|\.sql|\.log|\.json|\.lock|\.md)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+Options -Indexes
