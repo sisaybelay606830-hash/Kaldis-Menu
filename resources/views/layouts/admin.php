@@ -66,6 +66,11 @@
                             <i class="bi bi-qr-code me-2"></i> QR Codes
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a href="<?= base_url('admin/feedbacks') ?>" class="nav-link <?= str_contains($_SERVER['REQUEST_URI'] ?? '', 'admin/feedbacks') ? 'active' : '' ?>">
+                            <i class="bi bi-chat-heart me-2"></i> Customer Feedback
+                        </a>
+                    </li>
                 </ul>
 
                 <div class="nav-section-title px-3 mb-1 text-uppercase extra-small text-muted fw-bold">Data & Sync</div>

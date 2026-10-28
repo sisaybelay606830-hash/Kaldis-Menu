@@ -104,6 +104,7 @@ class AdminController
 
         $result     = $this->productRepo->findAll($filters, $page, $perPage);
         $categories = $this->categoryRepo->getParentCategoriesWithChildren();
+        $vatRate    = (float) $this->settingsRepo->get('vat_rate', '1.20');
 
         View::render('admin/products/index', [
             'title'      => 'Product Management — Kaldis Coffee Admin',
@@ -113,6 +114,7 @@ class AdminController
             'perPage'    => $result['per_page'],
             'lastPage'   => $result['last_page'],
             'categories' => $categories,
+            'vatRate'    => $vatRate,
             'search'     => $search,
             'parentId'   => $parentId,
             'childId'    => $childId,
@@ -130,9 +132,12 @@ class AdminController
             Response::redirect(base_url('admin/products'));
         }
 
+        $vatRate = (float) $this->settingsRepo->get('vat_rate', '1.20');
+
         View::render('admin/products/edit', [
             'title'   => 'Edit Product: ' . e($product['name']),
             'product' => $product,
+            'vatRate' => $vatRate,
             'success' => Session::getFlash('success'),
             'error'   => Session::getFlash('error'),
         ], 'admin');
@@ -348,11 +353,32 @@ class AdminController
         $type     = Request::post('type', 'general');
         $label    = trim(Request::post('label', ''));
         $branchId = Request::int('branch_id');
+        $tableRef = trim((string)Request::post('table_ref', ''));
 
         $qrService = new QrCodeService();
 
         try {
-            if ($type === 'branch' && $branchId > 0) {
+            if ($type === 'feedback') {
+                $branch = $branchId > 0 ? $this->branchRepo->findById($branchId) : null;
+                $branchCode = $branch['code'] ?? null;
+                $defaultLabel = 'Kaldis Feedback QR';
+                if ($branch) {
+                    $defaultLabel .= ' - ' . $branch['name'];
+                }
+                if ($tableRef !== '') {
+                    $defaultLabel .= ' (Table ' . $tableRef . ')';
+                }
+                $finalLabel = $label !== '' ? $label : $defaultLabel;
+                $res = $qrService->generateFeedback($branch ? (int)$branch['id'] : null, $branchCode, $tableRef ?: null, $finalLabel);
+            } elseif ($type === 'table' && $branchId > 0 && $tableRef !== '') {
+                $branch = $this->branchRepo->findById($branchId);
+                if (!$branch) {
+                    Session::flash('error', 'Selected branch was not found.');
+                    Response::redirect(base_url('admin/qrcodes'));
+                }
+                $finalLabel = $label !== '' ? $label : "Kaldis - {$branch['name']} (Table {$tableRef})";
+                $res = $qrService->generateTable($branchId, $branch['code'], $tableRef, $finalLabel);
+            } elseif ($type === 'branch' && $branchId > 0) {
                 $branch = $this->branchRepo->findById($branchId);
                 if (!$branch) {
                     Session::flash('error', 'Selected branch was not found.');
@@ -545,12 +571,16 @@ class AdminController
             Response::redirect(base_url('admin/settings'));
         }
 
+        $rawVat = trim((string) Request::post('vat_rate', '1.20'));
+        $vatRate = is_numeric($rawVat) && (float)$rawVat > 0 ? number_format((float)$rawVat, 2, '.', '') : '1.20';
+
         $kvp = [
             'menu_title'          => trim(Request::post('menu_title', 'Kaldis Coffee')),
             'menu_subtitle'       => trim(Request::post('menu_subtitle', 'Digital Menu')),
             'default_branch_code' => trim(Request::post('default_branch_code', '')),
             'fallback_category'   => trim(Request::post('fallback_category', 'Uncategorized')),
             'show_prices'         => Request::post('show_prices') !== null ? '1' : '0',
+            'vat_rate'            => $vatRate,
             'items_per_page'      => (string) max(10, min(100, Request::int('items_per_page', 24))),
             'maintenance_mode'    => Request::post('maintenance_mode') !== null ? '1' : '0',
         ];
@@ -631,6 +661,61 @@ class AdminController
 
         Session::flash('success', "User '{$name}' created successfully.");
         Response::redirect(base_url('admin/users'));
+    }
+
+    // ──────────────────────────────────────────────────────── Customer Feedbacks
+    public function feedbacks(): void
+    {
+        $this->requireAuth();
+        $feedbackRepo = new \App\Repositories\FeedbackRepository();
+
+        $page     = max(1, Request::int('page', 1));
+        $branchId = Request::int('branch_id', 0);
+        $rating   = Request::int('rating', 0);
+        $reviewed = Request::get('reviewed', '');
+        $search   = trim((string)Request::get('search', ''));
+
+        $filters = [];
+        if ($branchId > 0) $filters['branch_id'] = $branchId;
+        if ($rating > 0)   $filters['rating'] = $rating;
+        if ($reviewed !== '') $filters['reviewed'] = (int)$reviewed;
+        if ($search !== '')   $filters['search'] = $search;
+
+        $feedbackData = $feedbackRepo->getAll($filters, $page, 20);
+        $stats        = $feedbackRepo->getStats();
+        $branches     = $this->branchRepo->getAll();
+
+        View::render('admin/feedbacks/index', [
+            'title'      => 'Customer Feedback — Admin',
+            'feedbacks'  => $feedbackData['data'],
+            'total'      => $feedbackData['total'],
+            'page'       => $feedbackData['page'],
+            'totalPages' => $feedbackData['total_pages'],
+            'stats'      => $stats,
+            'branches'   => $branches,
+            'filters'    => [
+                'branch_id' => $branchId,
+                'rating'    => $rating,
+                'reviewed'  => $reviewed,
+                'search'    => $search,
+            ],
+            'success'    => Session::getFlash('success'),
+            'error'      => Session::getFlash('error'),
+        ], 'admin');
+    }
+
+    public function feedbackToggleReviewed(string $id): void
+    {
+        $this->requireAuth();
+        if (!Csrf::verify()) {
+            Session::flash('error', 'Invalid security token.');
+            Response::redirect(base_url('admin/feedbacks'));
+        }
+
+        $feedbackRepo = new \App\Repositories\FeedbackRepository();
+        $feedbackRepo->toggleReviewed((int)$id);
+        Session::flash('success', 'Feedback review status updated.');
+        Response::redirect(base_url('admin/feedbacks'));
     }
 }
 

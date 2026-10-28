@@ -99,8 +99,26 @@
                                 <?php endif; ?>
                             </td>
                             <td>
-                                <?php if ($p['price'] !== null): ?>
-                                    <span class="fw-bold text-espresso"><?= number_format((float)$p['price'], 2) ?> <?= e($p['price_currency'] ?? 'ETB') ?></span>
+                                <?php
+                                $effPrice = null;
+                                $vatApplied = (float)($vatRate ?? 1.20);
+                                $isCustom = false;
+                                if ($p['price'] !== null && (float)$p['price'] > 0) {
+                                    $effPrice = (float)$p['price'];
+                                    $isCustom = true;
+                                } elseif (!empty($p['default_value']) && is_numeric($p['default_value']) && (float)$p['default_value'] > 0) {
+                                    $effPrice = round((float)$p['default_value'] * $vatApplied, 2);
+                                    $isCustom = false;
+                                }
+                                ?>
+                                <?php if ($effPrice !== null): ?>
+                                    <div class="fw-bold text-espresso"><?= number_format($effPrice, 2) ?> <?= e($p['price_currency'] ?? 'ETB') ?></div>
+                                    <?php if (!empty($p['default_value'])): ?>
+                                        <span class="text-muted extra-small d-block" style="font-size: 0.7rem;">
+                                            Base: <?= number_format((float)$p['default_value'], 2) ?> &times; <?= $vatApplied ?>
+                                            <?= $isCustom ? '<span class="badge bg-info text-dark ms-1" style="font-size:0.6rem">Manual</span>' : '' ?>
+                                        </span>
+                                    <?php endif; ?>
                                 <?php else: ?>
                                     <span class="text-muted extra-small fst-italic">Not verified</span>
                                 <?php endif; ?>

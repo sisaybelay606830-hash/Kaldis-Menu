@@ -55,6 +55,41 @@ class QrCodeService
         return $this->generate($label, 'branch', $url, $branchId);
     }
 
+    /**
+     * Generate a table-specific menu QR code.
+     */
+    public function generateTable(int $branchId, string $branchCode, string $tableRef, string $label): array
+    {
+        $url = $this->baseUrl . '?branch=' . urlencode($branchCode) . '&table=' . urlencode($tableRef);
+        return $this->generate($label, 'table', $url, $branchId, $tableRef);
+    }
+
+    /**
+     * Generate a customer feedback QR code (optional branch and table).
+     */
+    public function generateFeedback(?int $branchId, ?string $branchCode, ?string $tableRef, string $label): array
+    {
+        // Derive feedback URL from base QR URL by replacing /menu or appending /feedback
+        $base = $this->baseUrl;
+        if (str_ends_with($base, '/menu')) {
+            $url = substr($base, 0, -5) . '/feedback';
+        } else {
+            $url = rtrim($base, '/') . '/feedback';
+        }
+
+        $params = [];
+        if (!empty($branchCode)) {
+            $params['branch'] = $branchCode;
+        }
+        if (!empty($tableRef)) {
+            $params['table'] = $tableRef;
+        }
+        if (!empty($params)) {
+            $url .= '?' . http_build_query($params);
+        }
+        return $this->generate($label, 'feedback', $url, $branchId, $tableRef);
+    }
+
     // ---------------------------------------------------------------- Internal
 
     private function generate(
@@ -69,8 +104,11 @@ class QrCodeService
             throw new RuntimeException("Invalid QR target URL: {$url}");
         }
         $parsed = parse_url($url);
-        $allowedHosts = parse_url($this->baseUrl, PHP_URL_HOST);
-        if (($parsed['host'] ?? '') !== $allowedHosts) {
+        $allowedHosts = array_filter([
+            parse_url($this->baseUrl, PHP_URL_HOST),
+            parse_url(base_url(), PHP_URL_HOST),
+        ]);
+        if (!in_array($parsed['host'] ?? '', $allowedHosts, true)) {
             throw new RuntimeException("QR URL host does not match configured base URL.");
         }
 
@@ -78,11 +116,11 @@ class QrCodeService
         $filename   = 'qr_' . $type . '_' . time() . '_' . bin2hex(random_bytes(4)) . '.png';
         $outputPath = $this->outputDir . $filename;
 
-        // Generate QR code
+        // Generate QR code with automatic version sizing to fit arbitrary URL lengths
         $options = new QROptions([
-            'version'       => 5,
+            'version'       => QRCode::VERSION_AUTO,
             'outputType'    => QRCode::OUTPUT_IMAGE_PNG,
-            'eccLevel'      => QRCode::ECC_H,
+            'eccLevel'      => QRCode::ECC_M,
             'scale'         => 8,
             'imageBase64'   => false,
             'addQuietzone'  => true,

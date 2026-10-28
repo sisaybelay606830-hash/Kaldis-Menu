@@ -47,6 +47,15 @@
                         <div class="form-text extra-small">Number of products listed per page in the admin table.</div>
                     </div>
 
+                    <div class="mb-3">
+                        <label for="vat_rate" class="form-label small fw-semibold text-espresso">VAT Multiplier (e.g. 1.2 for 20% VAT)</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light text-muted"><i class="bi bi-percent"></i></span>
+                            <input type="number" step="0.01" min="1.0" max="3.0" class="form-control" id="vat_rate" name="vat_rate" value="<?= e($settings['vat_rate']['value'] ?? '1.20') ?>" required>
+                        </div>
+                        <div class="form-text extra-small">Calculates customer selling price by multiplying the base <code>default_value</code> from CNET ERP &times; this VAT factor (e.g. <code>default_value &times; 1.20</code>). Change this value anytime VAT adjustments are required.</div>
+                    </div>
+
                     <div class="border-top pt-3 mt-4 mb-3">
                         <div class="form-check form-switch mb-3">
                             <input class="form-check-input" type="checkbox" id="show_prices" name="show_prices" value="1" <?= ($settings['show_prices']['value'] ?? '0') === '1' ? 'checked' : '' ?>>

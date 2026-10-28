@@ -100,26 +100,33 @@
                     <?= \App\Helpers\Csrf::field() ?>
 
                     <div class="mb-3">
-                        <label for="type" class="form-label small fw-semibold text-espresso">QR Code Type</label>
-                        <select name="type" id="typeSelect" class="form-select form-select-sm" onchange="toggleBranchField(this.value)">
-                            <option value="general">General Menu (All Branches)</option>
+                        <label for="type" class="form-label small fw-semibold text-espresso">QR Code Purpose / Type</label>
+                        <select name="type" id="typeSelect" class="form-select form-select-sm" onchange="toggleQrFields(this.value)">
+                            <option value="feedback">Customer Feedback QR (Rate Experience)</option>
+                            <option value="general">General Digital Menu</option>
                             <option value="branch">Branch-Specific Menu</option>
+                            <option value="table">Table-Specific Menu</option>
                         </select>
                     </div>
 
-                    <div class="mb-3" id="branchFieldGroup" style="display: none;">
+                    <div class="mb-3" id="branchFieldGroup">
                         <label for="branch_id" class="form-label small fw-semibold text-espresso">Select Branch</label>
-                        <select name="branch_id" class="form-select form-select-sm">
-                            <option value="">-- Choose Branch --</option>
+                        <select name="branch_id" id="branchSelect" class="form-select form-select-sm">
+                            <option value="">-- Choose Branch (Optional for Feedback) --</option>
                             <?php foreach ($branches as $b): ?>
                                 <option value="<?= $b['id'] ?>"><?= e($b['name']) ?> (<?= e($b['code']) ?>)</option>
                             <?php endforeach; ?>
                         </select>
                     </div>
 
+                    <div class="mb-3" id="tableFieldGroup">
+                        <label for="table_ref" class="form-label small fw-semibold text-espresso">Table Number / Reference (Optional)</label>
+                        <input type="text" class="form-control form-control-sm" id="table_ref" name="table_ref" placeholder="e.g. Table 04 or Patio 2">
+                    </div>
+
                     <div class="mb-3">
                         <label for="label" class="form-label small fw-semibold text-espresso">Custom Label (Optional)</label>
-                        <input type="text" class="form-control form-control-sm" id="label" name="label" placeholder="e.g. Counter Display - Bole Branch">
+                        <input type="text" class="form-control form-control-sm" id="label" name="label" placeholder="e.g. Bole Branch Table 4 Feedback">
                     </div>
 
                     <div class="alert alert-info py-2 px-3 extra-small mb-3">
@@ -136,11 +143,27 @@
 </div>
 
 <script>
-function toggleBranchField(type) {
-    const grp = document.getElementById('branchFieldGroup');
-    if (grp) {
-        grp.style.display = (type === 'branch') ? 'block' : 'none';
+function toggleQrFields(type) {
+    const branchGrp = document.getElementById('branchFieldGroup');
+    const tableGrp  = document.getElementById('tableFieldGroup');
+
+    if (type === 'general') {
+        if (branchGrp) branchGrp.style.display = 'none';
+        if (tableGrp)  tableGrp.style.display = 'none';
+    } else if (type === 'branch') {
+        if (branchGrp) branchGrp.style.display = 'block';
+        if (tableGrp)  tableGrp.style.display = 'none';
+    } else if (type === 'table') {
+        if (branchGrp) branchGrp.style.display = 'block';
+        if (tableGrp)  tableGrp.style.display = 'block';
+    } else if (type === 'feedback') {
+        if (branchGrp) branchGrp.style.display = 'block';
+        if (tableGrp)  tableGrp.style.display = 'block';
     }
 }
+document.addEventListener('DOMContentLoaded', function() {
+    const sel = document.getElementById('typeSelect');
+    if (sel) toggleQrFields(sel.value);
+});
 </script>
 

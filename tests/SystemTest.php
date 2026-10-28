@@ -48,6 +48,8 @@ class SystemTest
         $this->testProductRepository();
         $this->testAdminUserAuthentication();
         $this->testQrCodeGeneration();
+        $this->testFeedbackQrCodeGeneration();
+        $this->testFeedbackRepository();
         $this->testImportServiceHandling();
         $this->testSettingsRepository();
         $this->testCsrfProtection();
@@ -87,7 +89,7 @@ class SystemTest
     {
         $expected = [
             'parent_categories', 'child_categories', 'products', 'branches',
-            'branch_products', 'qr_codes', 'users', 'settings', 'import_logs', 'audit_logs'
+            'branch_products', 'qr_codes', 'users', 'settings', 'import_logs', 'audit_logs', 'feedbacks'
         ];
         $tables = Database::local()->query("SHOW TABLES")->fetchAll(PDO::FETCH_COLUMN);
         
@@ -153,6 +155,46 @@ class SystemTest
         } catch (Throwable $e) {
             $this->assert("QR Code Generation Successful", false, $e->getMessage());
         }
+    }
+
+    private function testFeedbackQrCodeGeneration(): void
+    {
+        try {
+            $qrService = new QrCodeService();
+            $res = $qrService->generateFeedback(1, 'bole', 'T05', 'Test Bole Table 5 Feedback QR');
+            $this->assert("Feedback QR Code Generated", !empty($res['id']) && $res['type'] === 'feedback');
+            $this->assert("Feedback QR URL Points to /feedback", str_contains($res['url'], 'feedback') && str_contains($res['url'], 'branch=bole'));
+        } catch (Throwable $e) {
+            $this->assert("Feedback QR Code Generated", false, $e->getMessage());
+        }
+    }
+
+    private function testFeedbackRepository(): void
+    {
+        $repo = new \App\Repositories\FeedbackRepository();
+        $newId = $repo->create([
+            'branch_id'      => 1,
+            'table_number'   => 'T05',
+            'rating_overall' => 5,
+            'rating_coffee'  => 5,
+            'rating_food'    => 4,
+            'rating_service' => 5,
+            'comment'        => 'Exceptional traditional coffee and friendly staff!',
+            'customer_name'  => 'Test Customer',
+            'customer_phone' => '0911223344',
+        ]);
+
+        $this->assert("Feedback Created in DB", $newId > 0);
+
+        $fb = $repo->getById($newId);
+        $this->assert("Feedback Retrieved by ID", $fb && $fb['rating_overall'] == 5 && $fb['table_number'] === 'T05');
+
+        $repo->toggleReviewed($newId);
+        $fbUpdated = $repo->getById($newId);
+        $this->assert("Feedback Toggle Reviewed", (int)$fbUpdated['is_reviewed'] === 1);
+
+        $stats = $repo->getStats();
+        $this->assert("Feedback Stats Calculated", $stats['total_count'] > 0 && $stats['avg_overall'] > 0);
     }
 
     private function testImportServiceHandling(): void

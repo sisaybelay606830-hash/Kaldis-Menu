@@ -142,11 +142,21 @@
                                 <p class="product-description text-muted fst-italic">Prepared fresh with premium ingredients.</p>
                             <?php endif; ?>
 
+                            <?php
+                            $vatRate = (float)($settings['vat_rate']['value'] ?? '1.20');
+                            $displayPrice = null;
+                            if ($p['price'] !== null && (float)$p['price'] > 0) {
+                                $displayPrice = (float)$p['price'];
+                            } elseif (!empty($p['default_value']) && is_numeric($p['default_value']) && (float)$p['default_value'] > 0) {
+                                $displayPrice = round((float)$p['default_value'] * $vatRate, 2);
+                            }
+                            ?>
                             <div class="product-footer">
-                                <?php if ($showPrices && $p['price'] !== null): ?>
+                                <?php if ($showPrices && $displayPrice !== null): ?>
                                     <div>
-                                        <span class="product-price"><?= number_format((float)$p['price'], 2) ?></span>
+                                        <span class="product-price"><?= number_format($displayPrice, 2) ?></span>
                                         <span class="product-price-currency"><?= e($p['price_currency'] ?? 'ETB') ?></span>
+                                        <span class="text-muted extra-small d-block text-nowrap" style="font-size: 0.68rem;">incl. VAT</span>
                                     </div>
                                 <?php else: ?>
                                     <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1 extra-small fw-semibold">

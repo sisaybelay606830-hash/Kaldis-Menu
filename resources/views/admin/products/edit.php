@@ -36,9 +36,9 @@
                         <div class="form-text extra-small">When disabled, this product is immediately hidden from customers.</div>
                     </div>
 
-                    <!-- Verified Price -->
+                    <!-- Verified Price & VAT calculation -->
                     <div class="mb-3">
-                        <label for="price" class="form-label small fw-semibold text-espresso">Verified Selling Price (ETB)</label>
+                        <label for="price" class="form-label small fw-semibold text-espresso">Manual Override Selling Price (ETB)</label>
                         <div class="input-group">
                             <span class="input-group-text bg-light text-muted">ETB</span>
                             <input 
@@ -49,12 +49,16 @@
                                 id="price" 
                                 name="price" 
                                 value="<?= $product['price'] !== null ? e((string)$product['price']) : '' ?>" 
-                                placeholder="e.g. 85.00 (Leave empty if unverified)"
+                                placeholder="<?= !empty($product['default_value']) ? number_format((float)$product['default_value'] * ($vatRate ?? 1.20), 2, '.', '') : 'e.g. 85.00' ?>"
                             >
                         </div>
-                        <div class="form-text extra-small">
-                            <i class="bi bi-shield-check text-success"></i> Only verified, authoritative prices should be entered. Never assume <code>default_value</code> is a monetary price.
-                        </div>
+                        <?php if (!empty($product['default_value']) && is_numeric($product['default_value'])): ?>
+                            <div class="p-2 mt-2 bg-light rounded border extra-small text-muted">
+                                <i class="bi bi-calculator text-gold me-1"></i>
+                                <strong>System VAT Price:</strong> Base ERP <code>default_value</code> (<?= number_format((float)$product['default_value'], 2) ?> ETB) &times; VAT factor (<?= number_format((float)($vatRate ?? 1.20), 2) ?>) = <strong class="text-success"><?= number_format((float)$product['default_value'] * ($vatRate ?? 1.20), 2) ?> ETB</strong>.
+                                <br><span class="text-secondary">If the override input is empty, this VAT-calculated price is automatically displayed on the digital menu. Enter a price above only if you wish to override it manually.</span>
+                            </div>
+                        <?php endif; ?>
                     </div>
 
                     <!-- Local Description -->

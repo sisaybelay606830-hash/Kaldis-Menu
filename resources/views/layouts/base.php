@@ -38,6 +38,9 @@
                             <span class="fw-semibold"><?= e($branch['name']) ?></span>
                         </div>
                     <?php endif; ?>
+                    <a href="<?= base_url('feedback' . (!empty($branch) ? '?branch=' . urlencode($branch['code']) : '')) ?>" class="btn btn-outline-gold btn-sm rounded-pill px-3" title="Rate Us & Feedback">
+                        <i class="bi bi-chat-heart me-1"></i> Feedback
+                    </a>
                     <a href="<?= base_url('admin/login') ?>" class="btn btn-outline-gold btn-sm rounded-pill px-3" title="Staff Login">
                         <i class="bi bi-shield-lock me-1"></i> Staff
                     </a>
@@ -54,6 +57,11 @@
     <!-- Footer -->
     <footer class="kaldis-footer mt-5 py-4 text-center">
         <div class="container">
+            <div class="mb-3">
+                <a href="<?= base_url('feedback' . (!empty($branch) ? '?branch=' . urlencode($branch['code']) : '')) ?>" class="btn btn-sm btn-gold rounded-pill px-4 shadow-sm">
+                    <i class="bi bi-star-fill me-1"></i> How was your experience? Leave Feedback
+                </a>
+            </div>
             <div class="brand-crest mx-auto mb-2" style="width: 36px; height: 36px;">
                 <i class="bi bi-cup-hot-fill text-gold" style="font-size: 1.1rem;"></i>
             </div>

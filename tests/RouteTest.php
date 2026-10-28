@@ -39,14 +39,18 @@ function testRoute(string $method, string $uri, array $getParams = []): void {
     }
 }
 
-echo "Testing Public Menu and Admin Routes:\n";
+echo "Testing Public Menu, Feedback, and Admin Routes:\n";
 testRoute('GET', '/menu');
 testRoute('GET', '/menu', ['q' => 'Espresso']);
+testRoute('GET', '/feedback');
+testRoute('GET', '/feedback', ['branch' => 'bole', 'table' => '4']);
+testRoute('GET', '/feedback/thank-you');
 testRoute('GET', '/admin/dashboard');
 testRoute('GET', '/admin/products');
 testRoute('GET', '/admin/categories');
 testRoute('GET', '/admin/branches');
 testRoute('GET', '/admin/qrcodes');
+testRoute('GET', '/admin/feedbacks');
 testRoute('GET', '/admin/import');
 testRoute('GET', '/admin/settings');
 testRoute('GET', '/admin/users');

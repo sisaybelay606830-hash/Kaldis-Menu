@@ -10,11 +10,15 @@ use App\Helpers\Response;
 use App\Controllers\AuthController;
 use App\Controllers\MenuController;
 use App\Controllers\AdminController;
+use App\Controllers\FeedbackController;
 
 // ── Public ──────────────────────────────────────────────────────────────────
-Router::get('/',             fn() => Response::redirect(base_url('menu')));
-Router::get('/menu',         [MenuController::class, 'index']);
-Router::get('/menu/{branch}',[MenuController::class, 'branch']);
+Router::get('/',                    fn() => Response::redirect(base_url('menu')));
+Router::get('/menu',                [MenuController::class, 'index']);
+Router::get('/menu/{branch}',       [MenuController::class, 'branch']);
+Router::get('/feedback',            [FeedbackController::class, 'form']);
+Router::post('/feedback',           [FeedbackController::class, 'submit']);
+Router::get('/feedback/thank-you',  [FeedbackController::class, 'thankYou']);
 
 // ── Authentication ──────────────────────────────────────────────────────────
 Router::get('/admin/login',  [AuthController::class, 'loginForm']);
@@ -55,6 +59,10 @@ Router::get('/admin/import/logs',  [AdminController::class, 'importLogs']);
 // ── Admin — Settings ────────────────────────────────────────────────────────
 Router::get('/admin/settings',  [AdminController::class, 'settings']);
 Router::post('/admin/settings', [AdminController::class, 'settingsSave']);
+
+// ── Admin — Customer Feedbacks ───────────────────────────────────────────────
+Router::get('/admin/feedbacks',                         [AdminController::class, 'feedbacks']);
+Router::post('/admin/feedbacks/{id}/toggle-reviewed',   [AdminController::class, 'feedbackToggleReviewed']);
 
 // ── Admin — Users (administrator role only) ─────────────────────────────────
 Router::get('/admin/users',  [AdminController::class, 'users']);

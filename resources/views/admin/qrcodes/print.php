@@ -145,11 +145,20 @@
 
             <div>
                 <div class="instruction-badge">
-                    <i class="bi bi-camera-fill"></i> SCAN TO VIEW DIGITAL MENU
+                    <?php if (($qr['type'] ?? '') === 'feedback'): ?>
+                        <i class="bi bi-star-fill text-warning"></i> SCAN TO RATE & GIVE FEEDBACK
+                    <?php else: ?>
+                        <i class="bi bi-camera-fill"></i> SCAN TO VIEW DIGITAL MENU
+                    <?php endif; ?>
                 </div>
                 <?php if (!empty($qr['branch_name'])): ?>
                     <div class="branch-badge">
                         <i class="bi bi-geo-alt-fill text-warning"></i> <?= e($qr['branch_name']) ?>
+                    </div>
+                <?php endif; ?>
+                <?php if (!empty($qr['table_ref'])): ?>
+                    <div class="fw-bold small text-muted mb-1">
+                        Table: <?= e($qr['table_ref']) ?>
                     </div>
                 <?php endif; ?>
                 <div class="url-text"><?= e($qr['public_url']) ?></div>

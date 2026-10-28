@@ -210,7 +210,8 @@ INSERT IGNORE INTO `settings` (`key`, `value`, `description`) VALUES
 ('menu_subtitle',       'Digital Menu',               'Public menu subtitle'),
 ('default_branch_code', '',                           'Default branch shown on menu (empty = all)'),
 ('fallback_category',   'Uncategorized',              'Category name for products with missing preferences'),
-('show_prices',         '0',                          '1 = show prices on public menu'),
+('show_prices',         '1',                          '1 = show prices on public menu'),
+('vat_rate',            '1.20',                       'VAT/tax multiplier applied to default_value (e.g. 1.20 for 20% VAT)'),
 ('items_per_page',      '24',                         'Products per page on admin list'),
 ('maintenance_mode',    '0',                          '1 = show maintenance message to customers');
 

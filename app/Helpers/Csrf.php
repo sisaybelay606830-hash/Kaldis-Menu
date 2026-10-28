@@ -14,31 +14,47 @@ class Csrf
 
     public static function token(): string
     {
+        if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
+            Session::start();
+        }
         if (empty($_SESSION[self::TOKEN_KEY])) {
             $_SESSION[self::TOKEN_KEY] = bin2hex(random_bytes(self::TOKEN_LENGTH));
         }
         return $_SESSION[self::TOKEN_KEY];
     }
 
-    public static function field(): string
+    public static function generate(): string
     {
-        return '<input type="hidden" name="_csrf_token" value="' . self::token() . '">';
+        return self::token();
     }
 
-    public static function verify(): bool
+    public static function field(string $name = '_csrf_token'): string
     {
-        $posted = $_POST['_csrf_token'] ?? '';
+        return '<input type="hidden" name="' . htmlspecialchars($name, ENT_QUOTES, 'UTF-8') . '" value="' . self::token() . '">';
+    }
+
+    public static function verify(?string $provided = null): bool
+    {
+        if ($provided === null) {
+            $provided = $_POST['_csrf_token'] ?? $_POST['csrf_token'] ?? '';
+        }
         $stored = $_SESSION[self::TOKEN_KEY] ?? '';
-        if (empty($posted) || empty($stored)) {
+        if (empty($provided) || empty($stored)) {
             return false;
         }
-        return hash_equals($stored, $posted);
+        return hash_equals($stored, $provided);
     }
 
-    /** Regenerate token after use (optional, use for high-security forms). */
+    public static function validateOrAbort(?string $provided = null): void
+    {
+        if (!self::verify($provided)) {
+            Response::abort(403, 'Invalid or expired CSRF security token.');
+        }
+    }
+
+    /** Regenerate token after use. */
     public static function regenerate(): void
     {
         $_SESSION[self::TOKEN_KEY] = bin2hex(random_bytes(self::TOKEN_LENGTH));
     }
 }
-
