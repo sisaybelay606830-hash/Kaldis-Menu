@@ -41,9 +41,6 @@
                     <a href="<?= base_url('feedback' . (!empty($branch) ? '?branch=' . urlencode($branch['code']) : '')) ?>" class="btn btn-outline-gold btn-sm rounded-pill px-3" title="Rate Us & Feedback">
                         <i class="bi bi-chat-heart me-1"></i> Feedback
                     </a>
-                    <a href="<?= base_url('admin/login') ?>" class="btn btn-outline-gold btn-sm rounded-pill px-3" title="Staff Login">
-                        <i class="bi bi-shield-lock me-1"></i> Staff
-                    </a>
                 </div>
             </div>
         </div>

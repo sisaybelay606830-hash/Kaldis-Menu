@@ -666,7 +666,7 @@ class AdminController
     // ──────────────────────────────────────────────────────── Customer Feedbacks
     public function feedbacks(): void
     {
-        $this->requireAuth();
+        AuthMiddleware::requireAuth();
         $feedbackRepo = new \App\Repositories\FeedbackRepository();
 
         $page     = max(1, Request::int('page', 1));
@@ -706,7 +706,7 @@ class AdminController
 
     public function feedbackToggleReviewed(string $id): void
     {
-        $this->requireAuth();
+        AuthMiddleware::requireAuth();
         if (!Csrf::verify()) {
             Session::flash('error', 'Invalid security token.');
             Response::redirect(base_url('admin/feedbacks'));
